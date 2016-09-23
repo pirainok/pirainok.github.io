@@ -1,0 +1,260 @@
+<html>
+<head>
+  <meta charset=utf-8 />
+  <title>Esri Leaflet Quickstart</title>
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+  <!-- Load Leaflet from CDN-->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.0-rc.3/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.0.0-rc.3/dist/leaflet-src.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.0.0/leaflet.ajax.js"></script>
+
+
+  
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+  <script src='https://npmcdn.com/@turf/turf@3.5.1/turf.min.js'></script>
+
+  <style>
+    body { 
+		margin:0;
+		padding:0; }
+    #map { 
+		height: 100%;
+		width:100%;	
+		}
+	
+	#sidepanel{
+		line-height: 160%;
+		letter-spacing: 1px;
+		position: absolute;
+		top: 15px;
+		left: 15px;
+		height: 57vh;
+		width: 300px;
+		background-color: #f6f6f6;
+		overflow-y: scroll;
+		z-index: 1000;
+		box-shadow: 10px 10px 5px #888888;
+		-webkit-border-radius: 15px;
+		-moz-border-radius: 15px;
+		border-radius: 15px;
+		overflow-y: hidden;
+		
+	}
+	h2, #quakeChange{
+		padding-left:15px;
+	}
+	#desc{
+		padding-left:10px;
+	}
+
+	
+
+  </style>
+</head>
+<body>
+
+	<div id="map"></div>
+	<div id='sidepanel'><h2><u>Legend</u></h2><br>
+        <div id='quakeChange'><h4><u>Change Quake Source</u></h4>
+			<select id='dropdown' onchange='update()'>
+				<option value="sig">Sig. Quakes (Past Month)</option>
+				<option value="all">All Quakes (Past Day)</option>          
+			</select>
+			<input id='rad' type='text' placeholder='Enter a radius' value=5></input><br>
+			<button id='buff' onClick='buff()'>Buffer</button>
+		</div>
+	<div id='desc'></div><br>
+	<p>Number of earthquakes in <p id='radius'></p> mile radius is: <p id='numbE'></p></p>
+	</div>
+
+
+<script>
+	var map = L.map("map").setView([37.75, -122.23], 3);
+	L.control.zoom({position:'topright'}).addTo(map);
+	L.tileLayer('http://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}.{ext}', {
+    attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+	subdomains: 'abcd',
+	ext: 'png'
+	}).addTo(map);
+  var sigQuakeMon = 'http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_month.geojson';
+  var allQuake = 'http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson'
+  var quake7 = 'http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson'
+  var quakeRecent = 'http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson'
+  
+	var myStyle = {
+		"color": "#03f",
+		"weight": 5,
+		'radius':2,
+		"opacity": 1
+	};
+	
+	var listOfPts;
+	
+	function findPt(){
+		ptList = [];
+		buffPt = [];
+			map.eachLayer(function(layer){
+				if(typeof(layer.feature) == 'object' && layer.feature.geometry.type == 'Point'){
+					ptList.push(layer.feature)
+				};
+			});
+		for(i=0;i<ptList.length-1;i++){
+			x = turf.inside(ptList[i],buffered);
+			if(x == true){
+				buffPt.push(ptList[i]);
+			}
+		};
+		return buffPt;
+	};
+		
+	
+	function grabPt(x,y){
+		//var test = [];
+		//test.push([x,y]);
+		console.log(x,y);
+		newPt = new L.circle([x,y],50,{color:'red'}).addTo(map);
+		newPt.bringToBack()
+		ptGJson = newPt.toGeoJSON();
+		rad = document.getElementById('rad').value
+		radius = parseInt(rad);
+		//console.log(ptGJson);
+		buffered = turf.buffer(ptGJson, radius,'miles');
+		document.getElementById('radius').innerHTML = radius;
+		a = new L.geoJson(buffered).addTo(map);
+		a.bringToFront();
+		return buffered,a;
+	};
+		
+	function eachPt(ptList){
+		for(i=0;i<=ptList.length-1;i++){
+			//console.log(ptList[i])
+			if(ptList[i].properties){
+				props = ptList[i].properties
+				rad = props.mag *1000;
+				x = new L.geoJson(ptList[i],
+					{style:{
+						color:'red',
+						radius:rad},
+					pointToLayer:function(feature,latlng){
+						return L.circle(latlng,myStyle);
+					}
+					}
+				);
+				//x.setRadius(rad);
+				x.addTo(map);
+			}
+		}
+	};
+		function buff(){
+			console.log(listOfPts);
+			grabPt(listOfPts[0],listOfPts[1]);
+			//console.log(buffered);
+			findPt();
+			//console.log(buffPt);
+			eachPt(buffPt);
+			document.getElementById('numbE').innerHTML = buffPt.length
+		};
+
+
+	
+	
+	function forEach(feature,layer){
+		if (feature.properties){
+			var props = feature.properties
+			var coords = feature.geometry.coordinates
+			//console.log(props);
+			//loc = props.title.search('-')
+			//place = props.title.slice(loc+1)
+			//popup = '<p><b><u>Location</u>: </b>' + place + '<br><b><u>Date</u>: </b>' + props.time + '<br><b><u>Magnitude</u>: </b>' + props.mag + '</p>'
+			rad = props.mag *1000
+			if (props.mag >6){
+				col = '#ff0000'
+				layer.setStyle({color:col});
+				
+			}
+			//layer.bindPopup(popup);
+			layer.setRadius(rad);
+		}
+		layer.on('click',function(){
+			prop = layer.feature.properties
+			loc = prop.title.search('-')
+			place = prop.title.slice(loc+1)
+			popup = '<p><b><u>Location</u>: </b>' + place + '<br><b><u>Date</u>: </b>' + prop.time + '<br><b><u>Magnitude</u>: </b>' + prop.mag + '</p>'
+			listOfPts = [];
+			listOfPts.push(coords[1],coords[0]);
+			map.eachLayer(function(layer){
+				if(layer.options.fill == true){
+					//console.log(layer.options.fill);
+					layer.setStyle({color:'blue'});
+				};
+			document.getElementById('desc').innerHTML = popup;
+			});
+			
+			layer.setStyle({color:'lightblue'});
+			return listOfPts;
+			
+		});
+	}
+
+		
+
+	
+	function sigQuake(){
+		$.getJSON(sigQuakeMon,function(data){
+			var gjson = new L.geoJson(data,{
+				onEachFeature:forEach,
+				pointToLayer:function(feature,latlng){
+					return L.circle(latlng,myStyle);
+				}
+			}).addTo(map);
+			//equake = gjson;
+			//console.log(equake);
+		});	
+	};
+	sigQuake();	
+	
+	function monthQuake(){
+		$.getJSON(quakeRecent,function(data){
+			var gjson = new L.geoJson(data,{
+				onEachFeature:forEach,
+				pointToLayer:function(feature,latlng){
+					return L.circle(latlng,myStyle);
+				}
+			}).addTo(map);
+		});	
+	};
+	
+	function update(){
+		var drop = document.getElementById('dropdown');
+		var selected = drop.options[drop.selectedIndex].value;
+		updateMap(map,selected);		
+	};
+
+	function updateMap(map,selected){
+		if(selected == 'all'){
+			map.eachLayer(function(layer){
+				if(layer.options.ext != 'png'){
+					map.removeLayer(layer);
+				}
+			});
+		monthQuake();
+		}
+		if(selected == 'sig'){
+			map.eachLayer(function(layer){
+					if(layer.options.ext != 'png'){
+						map.removeLayer(layer);
+					}
+			});
+		sigQuake();
+	}};
+	updateMap(map,'sig');
+		
+	
+	
+
+</script>
+
+</body>
+</html>
