@@ -62,11 +62,12 @@
 				<option value="sig">Sig. Quakes (Past Month)</option>
 				<option value="all">All Quakes (Past Day)</option>          
 			</select>
-			<input id='rad' type='text' placeholder='Enter a radius' value=5></input><br>
+			<input id='rad' type='text' placeholder='Enter a radius (miles)' value=5></input><br>
 			<button id='buff' onClick='buff()'>Buffer</button>
 		</div>
 	<div id='desc'></div><br>
-	<p>Number of earthquakes in <p id='radius'></p> mile radius is: <p id='numbE'></p></p>
+	<p>id='results'</p>
+	</div>
 	</div>
 
 
@@ -124,7 +125,7 @@
 		document.getElementById('radius').innerHTML = radius;
 		a = new L.geoJson(buffered).addTo(map);
 		a.bringToFront();
-		return buffered,a;
+		return buffered,rad;
 	};
 		
 	function eachPt(ptList){
@@ -148,13 +149,14 @@
 		}
 	};
 		function buff(){
-			console.log(listOfPts);
+			//console.log(listOfPts);
 			grabPt(listOfPts[0],listOfPts[1]);
 			//console.log(buffered);
 			findPt();
 			//console.log(buffPt);
 			eachPt(buffPt);
-			document.getElementById('numbE').innerHTML = buffPt.length
+			//document.getElementById('numbE').innerHTML = buffPt.length
+			document.getElementById('results').innerHTML = 'There are ' + buffPt.length + ' other earthquakes in a ' + rad + ' miles raidus'		
 		};
 
 
