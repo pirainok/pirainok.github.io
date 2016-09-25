@@ -67,6 +67,7 @@
 			</select>
 			<input id='rad' type='text' placeholder='Enter a radius (miles)' value=5></input><br>
 			<button id='buff' onClick='buff()'>Buffer</button>
+			<button id='clear' onClick='clearBuff()'>Clear Buffers</button>
 		</div>
 	<div id='desc'></div><br>
 	<p id='results'></p>
@@ -203,7 +204,13 @@
 		});
 	}
 
-		
+	var clearBuff = function(){
+		map.eachLayer(function(layer){
+			if (typeof(layer.feature) == 'object' && layer.feature.geometry.type == 'Polygon'){
+				map.removeLayer(layer);
+			}
+		});
+	}	
 
 	
 	function sigQuake(){
