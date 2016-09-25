@@ -127,7 +127,7 @@
 		buffered = turf.buffer(ptGJson, radius,'miles');
 		//document.getElementById('radius').innerHTML = radius;
 		a = new L.geoJson(buffered).addTo(map);
-		a.bringToFront();
+		a.bringToBack();
 		return buffered,radius;
 	};
 		
