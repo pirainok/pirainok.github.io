@@ -209,6 +209,9 @@
 			if (typeof(layer.feature) == 'object' && layer.feature.geometry.type == 'Polygon'){
 				map.removeLayer(layer);
 			}
+			if(layer.options.color == 'red'){
+				map.removeLayer(layer);
+			};
 		});
 	}	
 
