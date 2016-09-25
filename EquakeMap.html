@@ -122,10 +122,10 @@
 		radius = parseInt(rad);
 		//console.log(ptGJson);
 		buffered = turf.buffer(ptGJson, radius,'miles');
-		document.getElementById('radius').innerHTML = radius;
+		//document.getElementById('radius').innerHTML = radius;
 		a = new L.geoJson(buffered).addTo(map);
 		a.bringToFront();
-		return buffered,rad;
+		return buffered,radius;
 	};
 		
 	function eachPt(ptList){
