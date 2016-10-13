@@ -139,7 +139,7 @@ function lineCol_1(d){
 function onEachFeature(feature, layer) {
     if (feature.properties) {
         var props = feature.properties
-		console.log(props);
+		//console.log(props);
 		var radius = props['F_SCALE'] *5;
 		popup = "<p><b>Date: </b>" + props['DATE_'] + "<br><b>F-Scale: </b>" + props['F_SCALE'] +"<br><b>Width: </b>" + props['WIDTH'] + "<br><b>Injured: </b>" + props['INJ'] + "<br><b>Fatal: </b>" + props['FATAL'] + "<br></p>"
 		if (radius < 1){
