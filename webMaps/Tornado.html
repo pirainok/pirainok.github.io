@@ -1,0 +1,262 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Toronado Since 2005</title>
+	<meta charset="utf-8" />
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" />
+
+
+	<script src="https://www.msu.edu/~pirainok/data/tornado.geojson" type="text/javascript" ></script>
+	
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
+	<script type="text/javascript" src="https://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
+	
+<style>
+#map{
+	width:100%;
+	height:100%;
+}
+  #sidepanel{
+    line-height: 160%;
+    letter-spacing: 1px;
+    position: absolute;
+    top: 5px;
+    left: 15px;
+    height: 57vh;
+    width: 300px;
+    background-color: #f6f6f6;
+    overflow-y: scroll;
+    z-index: 2;
+    box-shadow: 10px 10px 5px #888888;
+    -webkit-border-radius: 15px;
+    -moz-border-radius: 15px;
+    border-radius: 15px;
+    overflow-y: hidden;
+    
+  }
+
+</style>
+</head>
+<body>
+	<div id="map"></div>
+	<div id='sidepanel'><h2>Legend</h2><br>
+        <div id='colorChange'><h4>Change Color of Circles</h4>
+          <select id='dropdown' onchange='update()'>
+            <option value="color_1">Color Ramp Green</option>
+            <option value="color_2">Color Ramp Red</option>          
+        </select>
+	</div>
+	<div id='lineChange'><h4>Change Color of Lines</h4>
+          <select id='dropline' onchange='update()'>
+            <option value="line_2">Color Ramp Green</option>
+            <option value="line_1">Color Ramp Red</option>          
+        </select>
+	</div>
+	</div>
+	
+	
+	<script>
+	//creates map
+	var map = L.map('map',{zoomControl:false}).setView([40,-89], 7);
+	//grabs base map from url
+	L.tileLayer('http://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}.{ext}', {
+    attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+	subdomains: 'abcd',
+	ext: 'png'
+}).addTo(map);
+
+
+console.log(tor);
+
+//creates zoom control
+L.control.zoom({
+     position:'topright'
+}).addTo(map);
+
+//style for markers
+var markers = {
+	radius:5,
+	fillColor:'#ff7800',
+	color:'#000',
+	weight:1,
+	opacity:1,
+	fillOpacity:0.8
+	};
+
+	
+//style for boundary	
+var boundStyle = {
+	color:'#000000',
+	fillOpacity:0,
+	opacity:1,
+	weight:3,
+	dashArray: ['10','5']
+};
+//color function for symbols
+function getColor(d) {
+  return d == '2005'    ? "#edf8fb" :
+         d == '2006'      ? "#b2e2e2" :
+         d == '2007'  ? "#66c2a4" :
+         d == '2008'    ? "#238b45" :
+                             '#006d2c';
+	};
+//color function for symbols
+function getColor1(d) {
+  return d == '2005'    ? "#fef0d9" :
+         d == '2006'      ? "#fdcc8a" :
+         d == '2007'  ? "#fc8d59" :
+         d == '2008'    ? "#d7301f" :
+                             '#006d2c';
+	};
+
+//color function for lines
+function lineCol(d){
+	return d > 6 ? "#a50f15" :
+		   d > 5 ? "#de2d26" :
+		   d > 4 ? "#fb6a4a" :
+		   d > 3 ? "#fc9272" :
+		   d > 2 ? "#fcbba1" :
+		   d > 1 ? "#fee5d9" :
+				   "#000000" ;   
+	};
+//color function for lines
+function lineCol_1(d){
+	return d > 6 ? "#016c59" :
+		   d > 5 ? "#1c9099" :
+		   d > 4 ? "#67a9cf" :
+		   d > 3 ? "#a6bddb" :
+		   d > 2 ? "#d0d1e6" :
+		   d > 1 ? "#f6eff7" :
+				   "#000000" ;   
+	};
+	
+
+//creates graduate symbols of data based on f-scale	
+function onEachFeature(feature, layer) {
+    if (feature.properties) {
+        var props = feature.properties
+		console.log(props);
+		var radius = props['F_SCALE'] *5;
+		popup = "<p><b>Date: </b>" + props['DATE_'] + "<br><b>F-Scale: </b>" + props['F_SCALE'] +"<br><b>Width: </b>" + props['WIDTH'] + "<br><b>Injured: </b>" + props['INJ'] + "<br><b>Fatal: </b>" + props['FATAL'] + "<br></p>"
+		if (radius < 1){
+			radius = 1 *5;
+		}
+		layer.setRadius(radius);
+		layer.bindPopup(popup);
+    }
+}
+//computes tornado path based on lat long values from each point
+//some lines deleted due to lat long of (0,0)
+var test = []
+for (i=0; i<tor.features.length; i++){
+	props = tor.features[i].properties
+	coords = []
+	if (props['SPLAT'] != 0){
+	liftCoords = L.latLng(props['SPLAT'],props['SPLON'])
+	coords.push(liftCoords)
+	}
+	touchCoords = L.latLng(props['STLAT'],props['STLON'])
+	coords.push(touchCoords)
+	test.push(coords);
+};	
+
+//IL boundary geojson	
+L.geoJson(ilBound, {
+	style:boundStyle
+}).addTo(map);
+//Tornado points geojson
+L.geoJson(tor,{
+	pointToLayer: function(feature,latlng){
+		return L.circleMarker(latlng, markers);
+	},
+	onEachFeature:onEachFeature
+}).addTo(map);
+//tornado path data	
+var lines = L.multiPolyline(test,{
+	weight:3,
+	opacity:1
+}).addTo(map);	
+
+//computes distance for each line (path of tornado)
+//changes color ramp based on dropdown 
+function lineColors(line, selected){
+lines.eachLayer(function (layer) {
+	function deg2rad(deg){
+		return deg * (Math.PI/180)
+	}
+	if (layer._latlngs[1] != undefined){ 
+	var latlngs = layer._latlngs
+	R = 3959;
+	dlon = deg2rad(latlngs[1].lng - latlngs[0].lng);
+	dlat = deg2rad(latlngs[1].lat - latlngs[0].lat);
+	a = Math.sin(dlat/2) * Math.sin(dlat/2) + Math.cos(deg2rad(latlngs[0].lat)) * Math.cos(deg2rad(latlngs[1].lat)) * Math.sin(dlon/2) * Math.sin(dlon/2);
+	c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+	e = R * c; 
+	d = Number((e).toFixed(3));
+	var color;
+	if (selected == 'line_1'){
+		if (d==0){
+			layer.setStyle({opacity:0})
+		}
+		else{
+			color = lineCol_1(d);
+			layer.setStyle({color:color});
+		}
+	}
+	if(selected == 'line_2'){
+		if (d==0){
+			layer.setStyle({opacity:0})
+		}
+		else{
+			color = lineCol(d);
+			layer.setStyle({color:color});
+		}
+	}
+	 popup = "<p><b>Approx. Storm Length: </b>" + d+" miles</p>"
+	 layer.bindPopup(popup);
+	
+	}
+});
+};
+
+//grabs data from dropdown menu
+function update(){
+	var drop = document.getElementById('dropdown');
+    var selected = drop.options[drop.selectedIndex].value;
+	var dropLine = document.getElementById('dropline');
+    var selLine = dropLine.options[dropLine.selectedIndex].value;
+	updateSymbols(map,selected);
+	lineColors(map, selLine);
+};
+//updates color ramp of circle symbols
+function updateSymbols(map, selected){
+    map.eachLayer(function(layer){
+	if (layer.feature){
+            //access feature properties
+            var props = layer.feature.properties;
+			var color;
+			if (selected == 'color_2'){
+				color = getColor1(props['YEAR'])
+			}
+			if (selected == 'color_1'){
+				color = getColor(props['YEAR'])
+			}
+			layer.setStyle({fillColor:color});
+			//console.log(lines);
+		}
+	});
+};
+updateSymbols(map,'color_1');
+lineColors(map,'line_2');	
+
+
+
+
+
+	</script>
+</body>
+</html>
