@@ -1,0 +1,430 @@
+
+<!DOCTYPE html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js">
+      
+    </script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <title>Drone Strikes</title>
+  <script src='https://msu.edu/~pirainok/data/drones.geojson'></script>
+
+</head>
+<style>
+  body{
+    margin:0px;
+    padding:0px;
+  }
+  #legendcolor{
+    width:15px;
+    height:15px;
+  }
+  #map {
+    height: 100vh;
+    z-index:1;
+    }
+  #sidepanel{
+    line-height: 160%;
+    letter-spacing: 1px;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    height: 500px;
+    width: 300px;
+    background-color: #f6f6f6;
+    overflow-y: scroll;
+    z-index: 2;
+    box-shadow: 10px 10px 5px #888888;
+    -webkit-border-radius: 15px;
+    -moz-border-radius: 15px;
+    border-radius: 15px;
+    overflow-y: hidden;
+    
+  }
+  #attrDrop{
+    margin-left:35px;
+  }
+#radiusDrop {
+	position:absolute;
+	width:200px;
+	top:130px;
+	left:0px;
+	margin-left:35px;
+}
+
+#dim {
+	position:absolute;
+	width:150px;
+	top:27vh;
+	left:0px;
+	margin-left:35px;
+}
+
+#Legend {
+	position:absolute;
+	width:150px;
+	top:180px;
+	left:0px;
+	margin-left:35px;
+}
+#legendTitle{
+  margin-top:10px;
+}
+
+#plot{
+    width:100vw;
+    height: 200px;
+    margin: 0px;
+    position: fixed;
+    padding: 0px;
+    bottom:3px;
+    z-index:3;
+    
+  }
+#popup{
+  font-weight:bold;
+  font-size:10pt;
+  line-height: 160%;
+}
+#poptable{
+  font-size:10pt;
+}
+    
+  b{font-weight: 900;}
+
+h4{
+  margin:0px;
+}
+h2{
+  margin-left:5px;
+  margin-right:auto;
+  margin-bottom:0px;
+  text-align:center;
+  display:inline-block;
+}
+h5{
+  margin-top:0px;
+  margin-bottom:2px;
+  text-align:center;
+}
+#info{
+	font-size:10pt;
+	font-weight:bold;
+	color:black;
+	text-align:left;
+	position:fixed;
+	top:375px;
+	width:275px;
+	margin-left:10px;
+	line-height:13px;
+	
+}
+	
+</style>
+
+<body>
+      <div id='sidepanel'><h2>Drone Strikes in Pakistan</h2><br>
+      <h5><it>2004-2013</it></h5>
+        <div id='attrDrop'><h4>Attribute Displayed:</h4>
+          <select id='dropdown' onchange='update()'>
+            <option value="Maximum Children Reported Killed">Maximum Children Reported Killed</option>
+            <option value="Maximum Civilians Reported Killed">Maximum Civilians Reported Killed</option>
+            <option value="Maximum Total Reported Killed" selected>Maximum Total Reported Killed</option>
+            <option value="Minimum Children Reported Killed">Minimum Children Reported Killed</option>
+            <option value="Minimum Civilians Reported Killed">Minimum Civilians Reported Killed</option>
+            <option value="Minimum Total Reported Killed">Minimum Total Reported Killed</option>
+            
+        </select>
+        </div>
+        <div id='radiusDrop'><h4>Symbol Scale factor:</h4>
+      		<select id='dropdown1' onchange='update()'>
+                <option value=".1">10% scaling</option>
+                <option value=".2">20% scaling</option>
+                <option value=".4" selected>40% scaling</option>
+                <option value=".6">60% scaling</option>
+                <option value=".8">80% scaling</option>
+                <option value="1.01">100% scaling</option>
+        		    <option value="Sqrt" >Square Root Transform</option>
+      		        
+          </select>
+        </div>
+      <div id='Legend'>
+        <h4 id='legendTitle'>Timing of Strike</h4>
+        <table id='LegendTable'>
+          <tr><td id="legendcolor" style='background-color: #ffff66'></td><td>Morning<input type="checkbox" id='Morning'  onchange='update()'></td></tr>
+          <tr><td id="legendcolor" style='background-color: #ffb426'></td><td>Afternoon<input type="checkbox" id='Afternoon' onchange='update()'></td></tr>
+          <tr><td id="legendcolor" style='background-color: #a1b099'></td><td>Evening<input type="checkbox" id='Evening' onchange='update()'></td></tr>
+          <tr><td id="legendcolor" style='background-color: #0c0c0c'></td><td>Night<input type="checkbox" id='Night' onchange='update()'></td></tr>
+          <tr><td id="legendcolor" style='background-color: #3dd840'></td><td>Unknown<input type="checkbox" id='Unknown' onchange='update()'></td></tr>
+          
+        </table>
+  	 </div>
+	 <p id='info'> This data contains drone strikes in the Federally Adminstered Tribial Areas of Pakistan. This data was provided by <a href='https://www.thebureauinvestigates.com/category/projects/drones/'>The Bureau of Investigative Journalism</a>. </p>
+    </div>
+	
+    <div id="map">
+      
+    </div>
+    <div id='plot'></div>
+</body>
+<script>
+
+Array.prototype.contains = function(obj) {
+    var i = this.length;
+    while (i--) {
+        if (this[i] === obj) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// BEGIN LEAFLET CODE
+
+
+
+var map = L.map("map",{
+  zoomControl:false
+}).setView([32.6, 69.9], 7)
+
+L.control.zoom({
+     position:'topright'
+}).addTo(map);
+
+var geojsonMarkerOptions = {
+    radius: 4,
+    fillColor: "#808080",
+    color: "#000",
+    weight: 1,
+    opacity: 1,
+    fillOpacity: 0.8
+};
+//console.log(geojson)
+function onEachFeature(feature, layer) {
+    popupContent =  "<table id='poptable'><tr><td id='popup'>Maximum Children Reported Killed: </td><td>" +  feature.properties['Maximum Children Reported Killed'] + "</td></tr>" + "<tr><td id='popup'>Maximum Total Reported Killed:</td><td> " +  feature.properties['Maximum Total Reported Killed'] + "</td></tr>" + "<tr><td id='popup'>Maximum Civilians Reported Killed: </td><td>" +  feature.properties['Maximum Civilians Reported Killed'] + "</td></tr>"+ "<tr><td id='popup'>Minimum Children Reported Killed:</td><td> " +  feature.properties["Minimum Children Reported Killed"] + "</td></tr>"+ "<tr><td id='popup'>Minimum Civilians Reported Killed:</td><td> " +  feature.properties['Minimum Civilians Reported Killed'] + "</td></tr>"+ "<tr><td id='popup'>Minimum Total Reported Killed:</td><td> " +  feature.properties['Minimum Total Reported Killed'] + "</td></tr>"
+    layer.bindPopup(popupContent)
+
+};
+pakistan = L.geoJson(pak,
+	{stroke:true,
+	color:'#000000',
+	fillOpacity:0,
+	opacity:1,
+	weight:3
+	}).addTo(map);
+L.geoJson(geojson, {
+    onEachFeature: onEachFeature,
+    pointToLayer: function (feature, latlng) {
+        return L.circleMarker(latlng, geojsonMarkerOptions);
+    }
+}).addTo(map);
+
+
+L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiZG9tZHAxIiwiYSI6Imx0SFpObk0ifQ.Ds4fAeW-v0w4yLqt_2Q3uQ',
+  {
+    attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+    maxZoom: 18,
+    id:'domdp1.c5b817e2',
+    accessToken:'pk.eyJ1IjoiZG9tZHAxIiwiYSI6Imx0SFpObk0ifQ.Ds4fAeW-v0w4yLqt_2Q3uQ',
+}).addTo(map);
+// BEGIN PLOT/UPDATE CODE
+// This is the onchange call for the selectbox
+//
+
+// function to create classes for symbols based on attribute value
+//too many classes?
+function getRadius(d) {
+		return d > 75   ? 75  :
+			   d > 50   ? 50  :
+			   d > 25   ? 25  :
+			   d > 10   ? 10  :
+			   d > 5    ? 5   :
+			   d > 2    ? 2   :
+				      	  0;
+	}
+	
+function getColor(d) {
+  return d == 'Evening'    ? "#a1b099" :
+         d == 'Night'      ? "#0c0c0c" :
+         d == 'Afternoon'  ? "#ffb426" :
+         d == 'Morning'    ? "#ffff66" :
+         d == 'Unknown'    ? "#3dd840" :
+                             '#FFEDA0';
+}
+
+	
+function updatePropSymbols(map, attribute,rad,timePeriods){
+    map.eachLayer(function(layer){
+      //console.log(layer)
+      //Example 3.16 line 4
+        if (layer.feature && layer.feature.properties[attribute]){
+            //access feature properties
+            var props = layer.feature.properties;
+			//console.log(test);
+            //update each feature's radius based on new attribute values
+            if (rad == true || rad == "Sqrt"){
+				      var radius = Math.sqrt(props[attribute]);
+				      layer.setRadius(radius);
+			      }
+			//possibly break symbols into classes
+			//use if else statements to produce classes
+      			else{
+      			var radius = getRadius(props[attribute]) *rad;
+      			layer.setRadius(radius);
+      			}
+      			//can change colors if needed just for quick symbolization
+      			if (props["Time Period"] == "Night"){
+      				layer.setStyle({fillColor:"#0c0c0c",fillOpacity: 0.8}); //set circle to black
+      			}
+      			if (props["Time Period"] == "Evening"){ //set to blue
+      				layer.setStyle({fillColor:"#a1b099",fillOpacity: 0.8});
+      			}
+      			if (props["Time Period"] == "Morning"){ //set to light yellow
+      				layer.setStyle({fillColor:"#ffff66",fillOpacity: 0.8});
+      			}
+      			if (props["Time Period"] == "Afternoon"){ //set to orange
+      				layer.setStyle({fillColor:"#ffb426",fillOpacity: 0.8});
+      			}
+      			if (props["Time Period"] == ""){
+      				layer.setStyle({fillColor:"#3dd840",fillOpacity: 0.8});
+      			}
+     
+			//use opacity to filter strikes based time of day
+			//maybe make function to clean up or shorten?
+			      //console.log(layer.feature)
+    			 if (timePeriods.contains(props["Time Period"])){
+    					layer.setStyle({fillOpacity:0.7, opacity:0.8});
+    				}else if(timePeriods.length==0){
+    				  layer.setStyle({fillOpacity:0.7, opacity:0.8})
+    				}else{
+    				  //console.log(props["Time Period"],props["Maximum Total Reported Killed"])
+    					layer.setStyle({fillOpacity:0, opacity:0, radius:0})
+    			}
+    }
+});
+}
+function update(){
+    var drop = document.getElementById('dropdown'); // get box
+    var selected = drop.options[drop.selectedIndex].value; // get selected value
+ // pass Y axis value to the new Plot function
+	  var Rad_drop= document.getElementById('dropdown1'); //change to 'dropdown1' to activate non-map dropdown; delete lines 195-203
+    var selectedRad = Rad_drop.options[Rad_drop.selectedIndex].value;
+	//console.log(selectedRad);
+	  var timePeriod = []
+	  
+		if(document.getElementById('Morning').checked){
+		  timePeriod.push('Morning')
+		};
+		if(document.getElementById('Afternoon').checked){
+		  timePeriod.push('Afternoon')
+		};
+		if(document.getElementById('Evening').checked){
+		  timePeriod.push('Evening')
+		};
+		if(document.getElementById('Night').checked){
+		  timePeriod.push('Night')
+		};
+		if(document.getElementById('Unknown').checked){
+		  timePeriod.push("")
+		};
+	  
+	  UpdatePlotandMap(selected,selectedRad, timePeriod);
+	// onchange events for the map should go here and
+    // probably in another function that is called in like newPlot
+  }
+// The following function creates/updates the plot (and map?)
+function UpdatePlotandMap(ystring, rad, timePeriod){
+    var layout = {
+      yaxis: {
+        title: 'Number Killed'
+      },
+      margin: {
+        t: 20
+      }
+    };
+
+    Plot = document.getElementById('plot'); // get plot div
+    xArray = []; // what is going to be the x value
+    var radius = rad
+    var timePeriods = timePeriod
+    //console.log(timePeriods)
+	  yArray = []; // the X value is always date. Might be able to get better
+                // performance claculating this once then calling it in.
+                // Not worrying about it for simplicity
+    //console.log(timePeriods)
+    
+    for(var i = 0; i < geojson.features.length; i++){ // loop through features
+      //console.log(geojson.features[i].properties["Time Period"])
+       //console.log(timePeriods.indexOf(geojson.features[i].properties["Time Period"]))
+       if(geojson.features[i].properties[ystring] > 0 && timePeriods.indexOf(geojson.features[i].properties["Time Period"]) != -1){
+          yArray.push(geojson.features[i].properties[ystring]); // grabing the Y value
+          xArray.push(geojson.features[i].properties['Date'])
+        }else if (geojson.features[i].properties[ystring] > 0 && timePeriods.length < 1){
+          yArray.push(geojson.features[i].properties[ystring]); // grabing the Y value
+          xArray.push(geojson.features[i].properties['Date'])
+      }//else{//console.log(geojson.features[i].properties["Time Period"],geojson.features[i].properties["Time Period"].length )};
+    };
+  	Plotly.newPlot( Plot, [{ //making a plot, don't really know this very well.
+                          	x: xArray,
+                          	y: yArray,
+  	}],
+                    layout);
+                  
+
+    Plot.on('plotly_click',function(data){
+      var drop = document.getElementById('dropdown');
+      var selected = drop.options[drop.selectedIndex].value;
+	  console.log(selected);
+      map.eachLayer(function(layer){
+        if (layer.feature && layer.feature.properties[selected]){
+          var props = layer.feature.properties;
+		  //console.log(data.points[0].x)
+          if (layer.feature.properties['Date'] == data.points[0].x){
+              if(props[selected] == data.points[0].y){
+                layer.setStyle({fillColor:"#FF0000",fillOpacity: 1})
+				layer.bringToFront();
+                  //console.log('match')
+            }
+          }else{
+              if (props["Time Period"] == "Night"){
+                layer.setStyle({fillColor:"#0c0c0c",fillOpacity: 0.7}); //set circle to black
+              }
+              if (props["Time Period"] == "Evening"){ //set to blue
+                layer.setStyle({fillColor:"#a1b099",fillOpacity: 0.7});
+              }
+              if (props["Time Period"] == "Morning"){ //set to light yellow
+                layer.setStyle({fillColor:"#ffff66",fillOpacity: 0.7});
+              }
+              if (props["Time Period"] == "Afternoon"){ //set to orange
+                layer.setStyle({fillColor:"#ffb426",fillOpacity: 0.7});
+              }
+              if (props["Time Period"] == ""){
+                layer.setStyle({fillColor:"#7FFF00",fillOpacity: 0.7});
+              }
+       
+              //use opacity to filter strikes based time of day
+              //maybe make function to clean up or shorten?
+              //console.log(layer.feature)
+             if (timePeriods.contains(props["Time Period"])){
+                layer.setStyle({fillOpacity:0.7, opacity:1});
+              }else if(timePeriods.length==0){
+                layer.setStyle({fillOpacity:0.7, opacity:1})
+              }else{
+                layer.setStyle({fillOpacity:0, opacity:0, radius:0})
+            }
+          }
+      }
+    })
+
+    })
+  	updatePropSymbols(map,ystring,radius,timePeriods)
+    
+  }
+  UpdatePlotandMap('Maximum Total Reported Killed',0.4,["","Morning","Afternoon","Evening","Night"])
+
+</script>
+
+</body>
