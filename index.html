@@ -9,6 +9,48 @@
 </head>
 <body>
 
+<style>
+#title{
+	text-align:center;
+	text-decoration:underline;
+	padding-top:50px;
+}
+#infoContainer{
+	margin:auto;
+	width:70%;
+	height:500px;
+	display:block;
+	/*border-style:solid;
+	border-color:black;
+	border-width:2px;*/
+	padding-left:10px;
+}
+
+#profilePicDiv{
+	display:block;
+	width:300px;
+	height:auto;
+	padding-top:10px;
+}
+#profilePic{
+	float:left;
+	width:auto;
+	height:auto;
+	padding-top:10px;
+	max-height:300px;
+	max-width:300px;
+	border-radius:75px;
+}
+#info{
+	float:right;
+	width:500px;
+	padding-top:10px;
+	padding-right:5px;
+}
+	
+
+
+</style>
 
 
 <nav class="navbar navbar-default">
@@ -27,8 +69,31 @@
 		</ul>
 	</div>
 </nav>
-<h3>This is currently a work in progress. Please check back later for any updates. You can also check out my current projects in my portfolio.</h3>
+<h3 id='title'>A little bit about me...</h3>
+<div id='infoContainer'>
+	<div id='profilePicDiv'>
+		<img id='profilePic' src='photos/ProfileImage.jpg'></img>
+	</div>
+	<div id='info'>
+			<p>I am a recent Michigan State University graduate of an M.S. GIS program  excited about building my professional GIS career! I am very interested in the application of GIS in the natural environment. I enjoy studying and analyzing the human and environmental boundary using GIS. Creating custom web maps that deliver environmental spatial data to the public is something I like to do in my spare time. If you would like to see some examples of these web maps check out my portfolio! All examples contained in my portfolio are works in progress.  <br><br>Through my time in my undergraduate and graduate education, I have aquired many GIS skills needed to be a well rounded GIS professional. Some of these skills include:<br>
+			</p>
+			<ul>
+				<li>Geostatisical Analysis using ArcGIS and R </li>
+				<li>Environmental modelling using GIS</li>
+				<li>Spatial and non-spatial data analysis using Python</li>
+				<li>Custom web mapping applications through JavaScript</li>
+			</ul><br>
+			<p>I have also learned many valueable skills through my time in the professional GIS environment. Some of these skills include:<br>
+			</p>
+			<ul>
+				<li>Development of ETL processes through the use of Python</li>
+				<li>Database management skill using SQL server</li>
+				<li>Basic ArcGIS Server management skills</li>
+				<li>Web applications creation using ArcGIS Online</li>
+				<li>Mobile mapping solutions using ArcGIS Online</li>
+			</ul>
+	</div>
+</div>
 </body>
 </html>
-
 
