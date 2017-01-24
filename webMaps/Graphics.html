@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
+    <title>test</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/3.19/dijit/themes/tundra/tundra.css">
+    <link rel="stylesheet" href="https://js.arcgis.com/3.19/esri/css/esri.css">
+    <style>
+	html, body, #mapDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+      }
+	  
+	#messages{
+        background-color: #fff;
+        box-shadow: 0 0 5px #888;
+        font-size: 1.1em;
+        max-width: 15em;
+        padding: 0.5em;
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        z-index: 40;
+		}
+		#messages2{
+        background-color: #fff;
+        box-shadow: 0 0 5px #888;
+        font-size: 1.1em;
+        max-width: 15em;
+        padding: 0.5em;
+        position: absolute;
+        right: 20px;
+        top: 120px;
+        z-index: 40;
+		}
+		
+    </style>
+    <script src="https://js.arcgis.com/3.19/"></script>
+    <script>
+	var map;
+	var circle;
+	var feat;
+	require([
+        "esri/map", "esri/layers/FeatureLayer", 
+        "esri/tasks/query", "esri/geometry/Circle",
+        "esri/graphic", "esri/InfoTemplate", "esri/symbols/SimpleMarkerSymbol",
+        "esri/symbols/SimpleLineSymbol", "esri/symbols/SimpleFillSymbol", "esri/renderers/SimpleRenderer",
+        "esri/config", "esri/Color","esri/tasks/query","esri/geometry/Polygon","esri/layers/GraphicsLayer", "dojo/dom", "dojo/domReady!"
+      ], function(
+        Map, FeatureLayer,
+        Query, Circle,
+        Graphic, InfoTemplate, SimpleMarkerSymbol,
+        SimpleLineSymbol, SimpleFillSymbol, SimpleRenderer,
+        esriConfig, Color,Query,Polygon,GraphicsLayer, dom
+      ){
+		map = new Map("mapDiv", { 
+			basemap: "streets",
+			center: [-88.249, 41.954],
+			zoom: 11,
+			slider: true
+		});
+		
+	var census = new FeatureLayer('https://sampleserver6.arcgisonline.com/arcgis/rest/services/Census/MapServer/2',{
+		outFields:['NAME','STATE_NAME','POP2000','CNTY_FIPS']
+		});
+	var block = new FeatureLayer('https://sampleserver6.arcgisonline.com/arcgis/rest/services/Census/MapServer/1',{
+		outFields:['TRACT','STATE_FIPS','POP2000'],
+		infoTemplate:['*']
+		});
+	
+	var blockPts = new FeatureLayer('https://sampleserver6.arcgisonline.com/arcgis/rest/services/Census/MapServer/0',{
+		outFields:['POP2000']
+	});
+	
+	
+	map.addLayers([census]);	
+	
+	var circleSymb = new SimpleFillSymbol(
+          SimpleFillSymbol.STYLE_NULL,
+          new SimpleLineSymbol(
+            SimpleLineSymbol.STYLE_SHORTDASHDOTDOT,
+            new Color([25, 0, 255]),
+            2
+          ), new Color([255, 255, 0, .5])
+        );
+	var polyGraphLayer = new GraphicsLayer();
+	var circleLayer = new GraphicsLayer();
+	var blockLayer = new GraphicsLayer();
+	map.addLayers([polyGraphLayer,circleLayer, blockLayer]);
+	
+	map.on("click", function(evt){
+		//console.log(census);
+          circle = new Circle({
+            center: evt.mapPoint,
+            geodesic: false,
+            radius: 1,
+            radiusUnit: "esriMiles"
+          });
+		  circleLayer.clear();
+          map.infoWindow.hide();
+          var graphic = new Graphic(circle, circleSymb);
+          circleLayer.add(graphic);
+		  var query = new Query();
+		  query.geometry = circle.getExtent();
+		  census.queryFeatures(query);
+	});
+	
+	var hovLayer = new SimpleFillSymbol(
+          SimpleFillSymbol.STYLE_SOLID,
+          new SimpleLineSymbol(
+            SimpleLineSymbol.STYLE_SOLID,
+            new Color([0, 0, 0,1]),
+            1
+          ), new Color([0, 0, 0, .15])
+        );
+	var blockSym = new SimpleFillSymbol(
+          SimpleFillSymbol.STYLE_NULL,
+          new SimpleLineSymbol(
+            SimpleLineSymbol.STYLE_SOLID,
+            new Color([255, 0, 0,.75]),
+            1
+          ), new Color([0, 0, 0, .15])
+        );
+	census.on('mouse-over',function(evt){
+		info = new Query();
+		info.geometry = evt.mapPoint;
+		census.queryFeatures(info,infoGraph);
+		polyGraphLayer.clear();
+		var polyGraph = new Graphic(evt.graphic.geometry,hovLayer);
+		//console.log(evt.graphic.geometry);
+		polyGraphLayer.add(polyGraph);
+		blkQuery = new Query();
+		blkQuery.geometry = evt.graphic.geometry;
+		blkPtQuery = new Query();
+		blkPtQuery.geometry = evt.graphic.geometry;
+		blockPts.spatialRelationship = Query.SPATIAL_REL_CROSSES;
+		blockPts.queryFeatures(blkPtQuery,sumBlkPts);
+		block.queryFeatures(blkQuery,test);
+	})
+	var sumPop;
+	function sumBlkPts(response){
+		sumPop=0
+		for(i=0;i<response.features.length;i++){
+			x = response.features[i].attributes['POP2000'];
+			//console.log(x);
+			sumPop = sumPop+x
+		}
+		pop = sumPop.toLocaleString()
+		dom.byId('messages2').innerHTML = '<b>Sum. Block Pop. 2000: </b>' +pop;
+	}
+	function test(response){
+		blockLayer.clear();
+		for(i=0;i<response.features.length;i++){
+			blockGraphic = new Graphic(response.features[i].geometry,blockSym)
+			x = response.features[i].attributes['POP2000'];
+			blockLayer.add(blockGraphic);
+		};
+	}
+
+	function infoGraph(response){
+		x = response.features[0].attributes;
+		name = x['NAME'];
+		state = x['STATE_NAME'];
+		pop2000 = x['POP2000'];
+		fips = x['CNTY_FIPS'];
+		popComma = pop2000.toLocaleString()
+		//console.log(popComma);
+		dom.byId('messages').innerHTML = '<b>Name: </b>' + name + '<br><b>State: </b>' + state + '<br><b>Pop. 2000: </b>' + popComma+ '<br><b>FIPS: </b>' + fips
+	};
+	
+	/*function createX(response){
+		var feature;
+		var features = response.features;
+	}*/
+	
+	});
+	
+	
+	
+	
+	</script>
+	</head>
+
+  <body>
+    <span id="messages"></span><br>
+	<span id="messages2"></span><br>
+    <div id="mapDiv"></div>
+  </body>
+</html>
