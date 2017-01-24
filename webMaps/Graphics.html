@@ -4,13 +4,13 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     
     <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
-    <title>test</title>
+    <title>ESRI JS: Graphics and Queries</title>
     <link rel="stylesheet" href="https://js.arcgis.com/3.19/dijit/themes/tundra/tundra.css">
     <link rel="stylesheet" href="https://js.arcgis.com/3.19/esri/css/esri.css">
     <style>
 	html, body, #mapDiv {
-        padding: 0;
-        margin: 0;
+        padding: 0px;
+        margin: 0px;
         height: 100%;
       }
 	  
@@ -36,6 +36,26 @@
         top: 120px;
         z-index: 40;
 		}
+		
+	#info{
+		width: 350px;
+		height:250px;
+		position:absolute;
+		left:10px;
+		top:10px;
+		background-color:white;
+		border-color:black;
+		border-width:2px;
+		border-style:solid;
+		z-index:1000;
+	}
+	h3{
+		text-align:center;
+	}
+	p{
+		padding:10px;
+		word-spacing:5px;
+	}
 		
     </style>
     <script src="https://js.arcgis.com/3.19/"></script>
@@ -149,7 +169,7 @@
 			sumPop = sumPop+x
 		}
 		pop = sumPop.toLocaleString()
-		dom.byId('messages2').innerHTML = '<b>Sum. Block Pop. 2000: </b>' +pop;
+		//dom.byId('messages2').innerHTML = '<b>Sum. Block Pop. 2000: </b>' +pop;
 	}
 	function test(response){
 		blockLayer.clear();
@@ -186,7 +206,11 @@
 
   <body>
     <span id="messages"></span><br>
-	<span id="messages2"></span><br>
+	<!-- <span id="messages2"></span><br> -->
+	<div id='info'>
+		<h3><u><strong>ESRI JS: Graphics and Queries</strong></u></h3>
+		<p>This is a simple web mapping application that displays census tracts for a given county across the United States. Using ESRI's JS and free web services, scrolling over a county will show it's census tracts and basic information about that county. This application uses ESRI JS's Graphics and Query functions to display the census data on demand.</p>
+	</div>
     <div id="mapDiv"></div>
   </body>
 </html>
